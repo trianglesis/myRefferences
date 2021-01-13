@@ -1,6 +1,8 @@
 """
 Change Win10 wallpaper to something downloaded.
 """
+import sys
+
 import requests
 import ctypes
 import datetime
@@ -88,10 +90,13 @@ def download(url):
             return r
         else:
             print(f'Request ended with status code: {r.status_code} {time() - ts}')
+    # TODO: Make retry
     except requests.exceptions.ConnectionError as e:
         print(f"<=Download=> ConnectionError: {e}")
+        sys.exit(1)
     except requests.exceptions.RequestException as e:
         print(f"Request ended with error: {e} {time() - ts}")
+        sys.exit(1)
 
 
 def save(tmp_dir, name, r=None):
@@ -152,7 +157,7 @@ def compose_image(matrix, render_path, saved_path, temp):
     print(f"List 2lvl {im_list_2d}")
     image_tile = concat_tile(im_list_2d)
     img_name = f"{render_path}/render.png"
-    saved_img = f"{saved_path}/_{now.strftime('%Y-%m-%d_%H-%M')}_saved.png"
+    saved_img = f"{saved_path}/World_{now.strftime('%Y-%m-%d_%H-%M')}.png"
     cv2.imwrite(img_name, image_tile)
     cv2.imwrite(saved_img, image_tile)
     wipe_temp(temp)
@@ -173,7 +178,7 @@ tmp = os.path.normpath('E:/Pictures/himawari/tmp')
 render = os.path.normpath('E:/Pictures/himawari/render')
 saved = os.path.normpath('E:/Pictures/himawari/saved')
 
-img_tiles_matrix = get_image_himiwari_sat(level=1, offset=9)
+img_tiles_matrix = get_image_himiwari_sat(level=1, offset=5)
 files_paths, files_obj = download_image_matrix(img_tiles_matrix, tmp)
 image_name = compose_image(files_obj, render, saved, tmp)
 set_wallpaper(path=image_name)
