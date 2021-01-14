@@ -84,7 +84,7 @@ def download(url):
     try:
         r = requests.get(url)
         if r.status_code == 200:
-            # log.info(f'Downloaded: {url} {time() - ts}')
+            log.info(f'Downloaded: {url} {time() - ts}')
             return r
         else:
             log.info(f'Request ended with status code: {r.status_code} {time() - ts}')
