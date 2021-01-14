@@ -111,7 +111,7 @@ def get_image_himawari_sat(level, offset):
     return img_tiles_m
 
 
-def download(url):
+def download(url, tmp):
     ts = time()
     try:
         r = requests.get(url)
@@ -119,14 +119,18 @@ def download(url):
             log.info(f'Downloaded: {url} {time() - ts}')
             return r
         else:
-            log.info(f'Request ended with status code: {r.status_code} {time() - ts}')
+            log.info(f'<=Download=> Request ended with status code: {r.status_code} {time() - ts}')
     # TODO: Make retry
     except requests.exceptions.ConnectionError as e:
         log.critical(f"<=Download=> ConnectionError: {e}")
-        sys.exit(1)
+        wipe_temp(tmp)
+        # exit()
+        # sys.exit(1)
     except requests.exceptions.RequestException as e:
-        log.critical(f"Request ended with error: {e} {time() - ts}")
-        sys.exit(1)
+        log.critical(f"<=Download=> Request ended with error: {e} {time() - ts}")
+        wipe_temp(tmp)
+        # exit()
+        # sys.exit(1)
 
 
 def save(tmp_dir, name, r=None):
@@ -146,7 +150,7 @@ def download_image_matrix(tile_matrix, tmp_dir):
         saved_files_paths.update({key: list()})
         saved_files_obj.update({key: list()})
         for k, v in val.items():
-            resp = download(url=v['url'])
+            resp = download(url=v['url'], tmp=tmp_dir)
             file = save(tmp_dir, name=k, r=resp)
             # Save list of files path:
             saved_files_paths[key].append(file)
@@ -183,8 +187,12 @@ def compose_image(matrix, render_path, saved_path, temp):
         im_list_2d.append(v)
     # log.info(f"List 2lvl {im_list_2d}")
     image_tile = concat_tile(im_list_2d)
-    img_name = f"{render_path}/render.png"
-    saved_img = f"{saved_path}/World_{now.strftime('%Y-%m-%d_%H-%M')}.png"
+    img_name = os.path.normpath(f"{render_path}/render.png")
+    saved_dir = f"{saved_path}/{now.strftime('%Y-%m-%d')}"
+    if not os.path.exists(saved_dir):
+        log.info(f"Creating folder for saving images: {saved_dir}")
+        os.makedirs(saved_dir)
+    saved_img = os.path.normpath(f"{saved_dir}/World_{now.strftime('%Y-%m-%d_%H-%M')}.png")
     cv2.imwrite(img_name, image_tile)
     cv2.imwrite(saved_img, image_tile)
     wipe_temp(temp)
@@ -194,6 +202,7 @@ def compose_image(matrix, render_path, saved_path, temp):
 
 def set_wallpaper(path):
     # ctypes.windll.user32.SystemParametersInfoW(SPI_SET_WALLPAPER, 0, pathToBmp, 0)
+    log.info(f"Install image as wallpaper: {path}")
     ctypes.windll.user32.SystemParametersInfoW(20, 0, path, 3)
 
 
@@ -212,6 +221,7 @@ def run():
     image_name = compose_image(files_obj, render, saved, tmp)
     set_wallpaper(path=image_name)
     log.info("<=== Finish wallpaper change ===>")
+    exit()
 
 
 if __name__ == "__main__":
