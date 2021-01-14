@@ -9,10 +9,13 @@ import datetime
 import os
 import cv2
 import glob
+from core import my_logger
 from time import time
 
+log = my_logger.test_logger(name='himawari', mode='w')
 
-def get_image_himiwari_sat(level, offset):
+
+def get_image_himawari_sat(level, offset):
     """
     Y dimention
     4d:
@@ -77,25 +80,20 @@ def get_image_himiwari_sat(level, offset):
 
 
 def download(url):
-    """
-
-    :param url:
-    :return:
-    """
     ts = time()
     try:
         r = requests.get(url)
         if r.status_code == 200:
-            print(f'Downloaded: {url} {time() - ts}')
+            # log.info(f'Downloaded: {url} {time() - ts}')
             return r
         else:
-            print(f'Request ended with status code: {r.status_code} {time() - ts}')
+            log.info(f'Request ended with status code: {r.status_code} {time() - ts}')
     # TODO: Make retry
     except requests.exceptions.ConnectionError as e:
-        print(f"<=Download=> ConnectionError: {e}")
+        log.critical(f"<=Download=> ConnectionError: {e}")
         sys.exit(1)
     except requests.exceptions.RequestException as e:
-        print(f"Request ended with error: {e} {time() - ts}")
+        log.critical(f"Request ended with error: {e} {time() - ts}")
         sys.exit(1)
 
 
@@ -103,17 +101,12 @@ def save(tmp_dir, name, r=None):
     file_name = os.path.normpath(f"{tmp_dir}/{name}.png")
     with open(file_name, 'wb') as f:
         f.write(r.content)
-        print(f'Saved file: {file_name}')
+        log.info(f'Saved file: {file_name}')
     return file_name
 
 
 def download_image_matrix(tile_matrix, tmp_dir):
-    """
-
-    :param tile_matrix:
-    :param tmp_dir:
-    :return:
-    """
+    log.info("Downloading tiles image.")
     saved_files_paths = dict()
     saved_files_obj = dict()
     ts = time()
@@ -127,7 +120,7 @@ def download_image_matrix(tile_matrix, tmp_dir):
             saved_files_paths[key].append(file)
             # Save list of read files
             saved_files_obj[key].append(cv2.imread(file))
-    print(f"Downloaded all tiles: {saved_files_paths} {time() - ts}")
+    log.info(f"Downloaded all tiles: {saved_files_paths} {time() - ts}")
     return saved_files_paths, saved_files_obj
 
 
@@ -136,6 +129,7 @@ def concat_tile(im_list_2d):
 
 
 def wipe_temp(temp):
+    log.info("Wipe temp.")
     files = glob.glob(temp+"/*")
     for f in files:
         os.remove(f)
@@ -150,11 +144,12 @@ def compose_image(matrix, render_path, saved_path, temp):
     :param temp:
     :return:
     """
+    log.info("Composing image.")
     now = datetime.datetime.now()
     im_list_2d = []
     for k, v in matrix.items():
         im_list_2d.append(v)
-    print(f"List 2lvl {im_list_2d}")
+    # log.info(f"List 2lvl {im_list_2d}")
     image_tile = concat_tile(im_list_2d)
     img_name = f"{render_path}/render.png"
     saved_img = f"{saved_path}/World_{now.strftime('%Y-%m-%d_%H-%M')}.png"
@@ -165,20 +160,22 @@ def compose_image(matrix, render_path, saved_path, temp):
 
 
 def set_wallpaper(path):
-    """
-
-    :param path:
-    :return:
-    """
     # ctypes.windll.user32.SystemParametersInfoW(SPI_SET_WALLPAPER, 0, pathToBmp, 0)
     ctypes.windll.user32.SystemParametersInfoW(20, 0, path, 3)
 
 
-tmp = os.path.normpath('E:/Pictures/himawari/tmp')
-render = os.path.normpath('E:/Pictures/himawari/render')
-saved = os.path.normpath('E:/Pictures/himawari/saved')
+def run():
+    log.info("<=== Start wallpaper change ===>")
+    tmp = os.path.normpath('E:/Pictures/himawari/tmp')
+    render = os.path.normpath('E:/Pictures/himawari/render')
+    saved = os.path.normpath('E:/Pictures/himawari/saved')
 
-img_tiles_matrix = get_image_himiwari_sat(level=1, offset=5)
-files_paths, files_obj = download_image_matrix(img_tiles_matrix, tmp)
-image_name = compose_image(files_obj, render, saved, tmp)
-set_wallpaper(path=image_name)
+    img_tiles_matrix = get_image_himawari_sat(level=1, offset=5)
+    files_paths, files_obj = download_image_matrix(img_tiles_matrix, tmp)
+    image_name = compose_image(files_obj, render, saved, tmp)
+    set_wallpaper(path=image_name)
+    log.info("<=== Finish wallpaper change ===>")
+
+
+if __name__ == "__main__":
+    run()
