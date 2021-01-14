@@ -9,10 +9,42 @@ import datetime
 import os
 import cv2
 import glob
-from core import my_logger
 from time import time
+import logging
 
-log = my_logger.test_logger(name='himawari', mode='w')
+
+place = os.path.normpath('D:/Projects/PycharmProjects/myRefferences/logs/')
+
+
+def test_logger(name, mode, path=None):
+    log = logging.getLogger(__name__)
+    log.setLevel(logging.DEBUG)
+    if not path:
+        path = place
+    log_name = os.path.normpath(f"{path}/{name}.log")
+
+    # Extra detailed logging to file:
+    f_handler = logging.FileHandler(log_name, mode=mode, encoding='utf-8')
+
+    f_handler.setLevel(logging.DEBUG)
+    # Extra detailed logging to console:
+    f_format = logging.Formatter(
+        '{asctime:<24}'
+        '{levelname:<8}'
+        '{filename:<20}'
+        '{funcName:<22}'
+        'L:{lineno:<6}'
+        '{message:8s}',
+        style='{'
+    )
+
+    f_handler.setFormatter(f_format)
+    log.addHandler(f_handler)
+
+    return log
+
+
+log = test_logger(name='himawari', mode='w')
 
 
 def get_image_himawari_sat(level, offset):
@@ -130,7 +162,7 @@ def concat_tile(im_list_2d):
 
 def wipe_temp(temp):
     log.info("Wipe temp.")
-    files = glob.glob(temp+"/*")
+    files = glob.glob(temp + "/*")
     for f in files:
         os.remove(f)
 
@@ -156,6 +188,7 @@ def compose_image(matrix, render_path, saved_path, temp):
     cv2.imwrite(img_name, image_tile)
     cv2.imwrite(saved_img, image_tile)
     wipe_temp(temp)
+    log.info(f"Saving image: {saved_img}")
     return img_name
 
 
@@ -165,6 +198,10 @@ def set_wallpaper(path):
 
 
 def run():
+    """
+    https://www.winhelponline.com/blog/run-bat-files-invisibly-without-displaying-command-prompt/
+    :return:
+    """
     log.info("<=== Start wallpaper change ===>")
     tmp = os.path.normpath('E:/Pictures/himawari/tmp')
     render = os.path.normpath('E:/Pictures/himawari/render')
