@@ -12,8 +12,7 @@ import glob
 from time import time
 import logging
 
-
-place = os.path.normpath('D:/Projects/PycharmProjects/myRefferences/logs/')
+place: str = os.path.normpath('D:/Projects/PycharmProjects/myRefferences/logs/')
 
 
 def test_logger(name, mode, path=None):
@@ -89,13 +88,14 @@ def get_image_himawari_sat(level, offset):
         hour = (today - datetime.timedelta(hours=offset)).strftime('%H')
     else:
         hour = today.strftime('%H')
-    minute = (today - datetime.timedelta(minutes=today.minute - 30 % 10)).strftime('%M')
+    minute = (today - datetime.timedelta(minutes=today.minute % 10)).strftime('%M')
     second = '00'
 
     # HH - each hour, MM each 10 min, SS - always 00
     img_time = f'{hour}{minute}{second}'
     LEVEL = level_matrix[level]
-
+    log.info(f'<=Himawari=> Day set to: {year}/{month}/{day}')
+    log.info(f'<=Himawari=> Time set to: {hour}:{minute}:{second}')
     # From 1st tile down columns
     img_tiles_m = dict()
     for X in range(LEVEL[1]):
@@ -124,13 +124,13 @@ def download(url, tmp):
     except requests.exceptions.ConnectionError as e:
         log.critical(f"<=Download=> ConnectionError: {e}")
         wipe_temp(tmp)
-        # exit()
-        # sys.exit(1)
+        exit()
+        sys.exit(1)
     except requests.exceptions.RequestException as e:
         log.critical(f"<=Download=> Request ended with error: {e} {time() - ts}")
         wipe_temp(tmp)
-        # exit()
-        # sys.exit(1)
+        exit()
+        sys.exit(1)
 
 
 def save(tmp_dir, name, r=None):
@@ -216,7 +216,7 @@ def run():
     render = os.path.normpath('E:/Pictures/himawari/render')
     saved = os.path.normpath('E:/Pictures/himawari/saved')
 
-    img_tiles_matrix = get_image_himawari_sat(level=1, offset=5)
+    img_tiles_matrix = get_image_himawari_sat(level=1, offset=7)
     files_paths, files_obj = download_image_matrix(img_tiles_matrix, tmp)
     image_name = compose_image(files_obj, render, saved, tmp)
     set_wallpaper(path=image_name)
