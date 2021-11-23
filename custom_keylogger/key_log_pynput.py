@@ -1,4 +1,4 @@
- # -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 from pynput import mouse, keyboard
 
@@ -41,11 +41,11 @@ def key_press(key):
     k_press = str(key)
 
     if k_press in keys_options:
-        s_note = f'{chr(9650)} {keys_options[k_press]}'
+        s_note = f' {chr(9660)}-{keys_options[k_press]}'
         print(s_note)
         f.write(s_note)
     elif 'Key.' in k_press:
-        s_note = f"{chr(9650)} {k_press}"
+        s_note = f" {chr(9660)}-{k_press}"
         print(s_note)
         f.write(s_note)
     else:
@@ -59,11 +59,11 @@ def key_release(key):
     k_press = str(key)
 
     if k_press in keys_options:
-        s_note = f'{chr(9660)} {keys_options[k_press]}'
+        s_note = f' {chr(9650)}-{keys_options[k_press]}'
         print(s_note)
         f.write(s_note)
     elif 'Key.' in k_press:
-        s_note = f"{chr(9660)} {k_press}"
+        s_note = f" {chr(9650)}-{k_press}"
         print(s_note)
         f.write(s_note)
     else:
@@ -74,5 +74,3 @@ def key_release(key):
 
 with keyboard.Listener(on_press=key_press, on_release=key_release) as key_listen:
     key_listen.join()
-
-
